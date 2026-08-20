@@ -4,26 +4,32 @@ from feedgen.feed import FeedGenerator
 
 SOURCE_RSS = "https://www.youtube.com/feeds/videos.xml?channel_id=UCZjpA3YBPXvJv3pg4SPEjfw"
 
+# Definimos las palabras clave exactamente como las necesitas
+# Usamos minúsculas para compararlas más fácilmente después
 KEYWORDS = [
-    "(goles)",
-    "Nacional"
+    "(goles)", 
+    "nacional"
 ]
 
+# Obtenemos el feed
 rss_text = requests.get(SOURCE_RSS, timeout=30).text
 feed = feedparser.parse(rss_text)
 
+# Configuramos el generador del nuevo feed
 fg = FeedGenerator()
 fg.title("RSS Filtrado")
 fg.link(href=SOURCE_RSS)
-fg.description("Videos filtrados de YouTube")
+fg.description("Videos que contienen '(goles)' y 'Nacional'")
 
+# Iteramos y filtramos
 for entry in feed.entries:
-    title = entry.title
+    title_lower = entry.title.lower()
 
-    if any(k.lower() in title.lower() for k in KEYWORDS):
+    # all() asegura que el título contenga AMBOS elementos de la lista
+    if all(k.lower() in title_lower for k in KEYWORDS):
         fe = fg.add_entry()
 
-        fe.title(title)
+        fe.title(entry.title)
         fe.link(href=entry.link)
 
         if hasattr(entry, "published"):
@@ -32,4 +38,5 @@ for entry in feed.entries:
         if hasattr(entry, "summary"):
             fe.description(entry.summary)
 
+# Generamos el archivo
 fg.rss_file("feed.xml")
